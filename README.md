@@ -1,60 +1,185 @@
-**Health Data Feature Engineering**
+# Health Data Quality & Feature Engineering Workbench
 
-Overview
-This project focuses on transforming raw healthcare survey datasets into clean, production-ready features suitable for predictive modeling and analytics. The goal is to handle missing values, consolidate overlapping categories, and engineer features that accurately represent respondents’ demographics and statuses.
+## Overview
 
-**Key Tasks and Approaches**
+This project transforms real healthcare survey and examination data into analysis-ready features through reproducible loading, cohort construction, missing-value handling, feature engineering, data-quality validation, and dashboard reporting.
 
-1. AGE_AT_SCREENING & AGE_AT_EXAM
+The repository is designed as a portfolio-ready example of practical healthcare data preparation and reporting rather than as a machine-learning or clinical-diagnosis project.
 
-Problem: The existing features RIDAGEMN (age in months at screening) and RIDAGEEX (age at examination) contain missing values.
+## Problem Statement
 
-**Approach:
-**
-AGE_AT_SCREENING: Use RIDAGEMN when available; for 148 missing cases, convert RIDAGEYR (years) to months (RIDAGEYR * 12) for precision.
+Downstream analysis becomes harder when healthcare datasets contain:
 
-AGE_AT_EXAM: Use actual exam age when available; for missing values, impute using the median 1-month gap between screening and exams based on time gap analysis.
+- missing age values in overlapping fields
+- split education categories across respondent groups
+- respondent coverage that differs by source file
+- additional lineage tables that do not align cleanly with the examination cohort
 
-Outcome: Generated complete, precise age features for all respondents.
+Before any useful reporting can happen, those issues need to be resolved in a documented and reproducible way.
 
-2. HIGHEST_EDUCATION
+## What the Project Does
 
-Problem: Overlapping categorical features (DMDEDUC3, DMDEDUC2) complicated educational level representation.
+- reproducible health-data loading from tracked raw files
+- cohort construction using `SEQN`
+- missing-value handling with documented fallback rules
+- feature engineering for age, education, and retirement reporting
+- data-quality reporting for source and engineered fields
+- Streamlit dashboard delivery
+- methodology documentation
+- automated validation and tests
 
-Approach:
+## Source Data
 
-Consolidated categories into ELEMENTARY, HIGHSCHOOL, COLLEGE based on definitions.
+The project uses four real source files:
 
-Treated ambiguous or missing cases conservatively and used age-based imputation to fill missing values, leveraging the correlation between age and education level.
+- `DEMO_D.csv`
+- `BPX_D.csv`
+- `TCHOL_D.csv`
+- `DEMO_RETIRED.CSV.xls`
 
-Outcome: Created a reliable, simplified education feature suitable for modeling.
+`DEMO_RETIRED.CSV.xls` is preserved under its original filename for traceability, even though the file contents are CSV-formatted text.
 
-3. RETIRED
+## Population Lineage
 
-Problem: Binary RETIRED feature has missing values.
+```text
+DEMO                         10,348
+  -> inner join BPX
+DEMO + BPX                   9,950
+  -> inner join TCHOL
+Analysis-ready exam cohort   8,086
+```
 
-Approach:
+The 8,086-row examination cohort is the primary analytical and dashboard population because it is the respondent set with the demographic, blood-pressure, and cholesterol data required for this workbench.
 
-Used an age-threshold strategy: <65 → not retired, ≥65 → retired, supported by exploratory analysis of valid records.
+## Engineered Features
 
-Analysis confirmed retirement status is strongly age-dependent, minimizing classification error.
+- `AGE_AT_SCREENING`
+- `AGE_AT_EXAM`
+- `HIGHEST_EDUCATION`
+- `RETIRED`
 
-Outcome: Completed a high-quality retirement feature aligned with real-world patterns.
+Detailed transformation rules are documented in [docs/transformation_rules.md](docs/transformation_rules.md).
 
-**Key Skills & Takeaways**
+## Data Quality Results
 
-Data Cleaning & Preprocessing (Python, Pandas)
+Current analysis-ready results:
 
-Missing Data Imputation Strategies (median, transformation, age-based thresholds)
+- `8,086` analysis-ready respondents
+- `0` duplicate `SEQN`
+- `AGE_AT_SCREENING`: `100%` complete
+- `AGE_AT_EXAM`: `100%` complete
+- `HIGHEST_EDUCATION`: `100%` complete
+- `RETIRED`: `100%` complete
+- overall engineered-feature completeness: `100%`
 
-Categorical Feature Consolidation & Mapping
+This does **not** mean every raw source field has zero missing values. The project explicitly preserves the distinction between raw-source completeness and engineered-feature completeness.
 
-Problem Framing & Critical Thinking
+## Dashboard
 
-Real-world Data Handling & Feature Engineering
+The Streamlit application is titled:
 
-**Next Steps / Applications**
+**Health Data Quality & Feature Engineering Workbench**
 
-Use these cleaned features for predictive modeling (e.g., diabetes risk, retirement risk analysis).
+Sections:
 
-Serve as a template for high-grade healthcare data reconciliation projects.
+- Overview
+- Data Quality
+- Feature Engineering
+- Demographic Insights
+- Methodology
+
+### Dashboard Preview
+
+No screenshot has been added in this stage. The dashboard is generated from live processed outputs and can be started locally with Streamlit.
+
+## Project Structure
+
+```text
+health-data-feature-engineering/
+|-- dashboard/
+|   `-- app.py
+|-- data/
+|   |-- raw/
+|   `-- processed/
+|-- docs/
+|   |-- assumptions.md
+|   |-- data_dictionary.md
+|   |-- project_overview.md
+|   `-- transformation_rules.md
+|-- image/
+|-- notebook/
+|   `-- Data Science Challenge - Medical Examination.ipynb
+|-- src/
+|   |-- __init__.py
+|   |-- data_loader.py
+|   |-- data_quality.py
+|   |-- feature_engineering.py
+|   `-- pipeline.py
+|-- tests/
+|   `-- test_pipeline.py
+|-- .gitignore
+|-- README.md
+`-- requirements.txt
+```
+
+## How to Run
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m src.pipeline
+streamlit run dashboard/app.py
+```
+
+Run tests with:
+
+```powershell
+pytest
+```
+
+## Generated Outputs
+
+These outputs are generated locally by `python -m src.pipeline` and ignored by Git:
+
+- `health_features_exam_cohort.csv`
+- `health_features_notebook_equivalent.csv`
+- `data_quality_report.csv`
+
+## Tools
+
+- Python
+- Pandas
+- NumPy
+- Streamlit
+- Plotly
+- Matplotlib
+- Seaborn
+- Pytest
+
+## Limitations
+
+- `RIDAGEMN` fallback uses `RIDAGEYR x 12`, which is less precise than true month-level age.
+- `AGE_AT_EXAM` uses a `+1 month` fallback inherited from the original notebook.
+- Current education mapping is preserved from the notebook, including one exam-cohort `DMDEDUC3 = 99` record treated as `ELEMENTARY`.
+- The notebook-equivalent outer merge is retained for lineage but is not the primary analytical population.
+- This project supports data-quality and decision-support workflows; it is not a clinical diagnosis or predictive medicine tool.
+
+## Why This Project Matters
+
+This work demonstrates how to turn messy healthcare survey/examination data into:
+
+- a reproducible analytical cohort
+- documented transformation rules
+- measurable data-quality improvements
+- stakeholder-friendly reporting outputs
+- a dashboard suitable for operational or project-support review
+
+That is useful in healthcare analytics, reporting, governance, and IT/data project support contexts where traceability matters as much as the final metrics.
+
+## Future Improvements
+
+- configurable education and retirement mapping rules
+- stronger schema validation around source files
+- expanded data-quality rules and anomaly checks
+- additional supported demographic and examination breakdowns
