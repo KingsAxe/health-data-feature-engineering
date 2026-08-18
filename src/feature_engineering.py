@@ -64,3 +64,8 @@ def fill_retired(df: pd.DataFrame) -> pd.Series:
     missing_mask = retired.isna()
     retired.loc[missing_mask] = np.where(df.loc[missing_mask, "RIDAGEYR"] >= 65, 1, 0)
     return retired
+
+
+def fill_retired_for_exam_cohort(df: pd.DataFrame) -> pd.Series:
+    """Preserve existing values and apply the notebook rule only within the exam cohort."""
+    return fill_retired(df)
