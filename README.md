@@ -90,7 +90,7 @@ Sections:
 
 ### Dashboard Preview
 
-No screenshot has been added in this stage. The dashboard is generated from live processed outputs and can be started locally with Streamlit.
+![Health Data Quality & Feature Engineering Workbench](image/dashboard-preview.png)
 
 ## Project Structure
 
